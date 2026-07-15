@@ -1,0 +1,6 @@
+Pillow>=10.0
+mutagen>=1.47
+
+# Optional: enables drag-and-drop of audio files onto the Track Listing
+# screen. The app works fine without it -- Add Tracks... always works.
+tkinterdnd2>=0.4.2
