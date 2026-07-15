@@ -43,12 +43,7 @@ Everything is generated to match the real, in-game-tested `.sii`/`.dds`/`.mat`/`
 
 | Tutorial Video|
 |---|
-| <p align="center">
-  <a href="https://youtu.be">
-    <img src="https://www.youtube.com/watch?v=-Fn6TG2eERg" alt="Watch the video" width="70%">
-  </a>
-</p>
- |
+| <p align="center"><a href="https://www.youtube.com/watch?v=-Fn6TG2eERg"><img src="https://youtube.com" alt="Watch the video" width="70%"></a></p> |
 
 ## Getting started
 
