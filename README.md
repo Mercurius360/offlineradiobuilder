@@ -20,7 +20,7 @@ Offline Radio Builder walks you through everything needed to ship a working offl
 
 - **Mod scaffolding** — generates `manifest.sii`, `mod_description.txt`, and a properly-sized `mod_icon.jpg` (auto-scaled to 276x162)
 - **Station management** — create, edit, and delete as many stations as you want, each with its own genre, language, stream-safe flag, history size, and crossfade duration
-- **UI images** — drop in a banner, mini player icon, and font/title image; the app converts them to the exact `.dds` format the game expects (correct pixel format, correct dimensions, correct `.mat`/`.tobj` pairing — including the SDF material format the font texture specifically needs) and lets you remove any of them later
+- **UI images** — drop in a banner, mini player icon, and font/title image via `.jpg` or `.png`; the app converts them to the exact `.dds` format the game expects (correct pixel format, correct dimensions, correct `.mat`/`.tobj` pairing — including the SDF material format the font texture specifically needs) and lets you remove any of them later
 - **Track listing** — drag and drop `.mp3`/`.ogg` files in, reads ID3/Vorbis tags automatically, falls back to the filename when tags are missing, and lets you edit any track's title/artist by hand
 - **One-click build** — nothing touches disk until you hit **Build Station**; everything is staged first, then written in one pass with a progress dialog
 
