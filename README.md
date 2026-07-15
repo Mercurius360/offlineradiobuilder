@@ -8,7 +8,7 @@
 
 No manual `.sii` editing, no hand-crafted `.dds`/`.tobj` files, no guessing at SCS's undocumented formats.
 
-*Windows and macOS builds available.*
+*Windows, macOS, and Linux builds available.*
 
 </div>
 
@@ -20,13 +20,13 @@ Offline Radio Builder walks you through everything needed to ship a working offl
 
 - **Mod scaffolding** — generates `manifest.sii`, `mod_description.txt`, and a properly-sized `mod_icon.jpg` (auto-scaled to 276x162)
 - **Station management** — create, edit, and delete as many stations as you want, each with its own genre, language, stream-safe flag, history size, and crossfade duration
-- **UI images** — drop in a banner, mini player icon, and font/title image via `.jpg` or `.png`; the app converts them to the exact `.dds` format the game expects (correct pixel format, correct dimensions, correct `.mat`/`.tobj` pairing — including the SDF material format the font texture specifically needs) and lets you remove any of them later
+- **UI images** — drop in a banner, mini player icon, and font/title image; the app converts them to the exact `.dds` format the game expects (correct pixel format, correct dimensions, correct `.mat`/`.tobj` pairing — including the SDF material format the font texture specifically needs) and lets you remove any of them later
 - **Track listing** — drag and drop `.mp3`/`.ogg` files in, reads ID3/Vorbis tags automatically, falls back to the filename when tags are missing, and lets you edit any track's title/artist by hand
 - **One-click build** — nothing touches disk until you hit **Build Station**; everything is staged first, then written in one pass with a progress dialog
 
 Everything is generated to match the real, in-game-tested `.sii`/`.dds`/`.mat`/`.tobj` formats — including several undocumented details (the `token` attribute's 12-character limit, the exact binary `.tobj` header layout, and the fact that a station's on-disk folder name must exactly equal its `id`) that aren't written down anywhere official and will silently break a mod if you get them wrong.
 
-## Screenshots & Tutorial Video
+## Screenshots
 
 | Welcome | Mod Setup |
 |---|---|
@@ -41,10 +41,6 @@ Everything is generated to match the real, in-game-tested `.sii`/`.dds`/`.mat`/`
 | ![Create/Edit Station](docs/screenshots/04_create_edit_station.png) |
 | ![Track chart with the song editor panel](docs/screenshots/05_tracks_chart.png) |
 
-| Tutorial Video|
-|---|
-| <p align="center"><a href="https://www.youtube.com/watch?v=-Fn6TG2eERg"><img src="https://youtube.com" alt="Watch the video on Youtube" width="70%"></a></p> |
-
 ## Getting started
 
 ### Option 1 — Download the build
@@ -53,8 +49,11 @@ Grab the latest build for your platform from [Releases](../../releases):
 
 - **Windows** — `OfflineRadioBuilder.exe`, no install needed
 - **macOS** — `OfflineRadioBuilder.dmg`, open it and drag the app to Applications
+- **Linux** — `OfflineRadioBuilder-x86_64.AppImage`, works across most distros with nothing else to install
 
 **macOS note:** the app isn't signed with an Apple Developer certificate, so Gatekeeper will block it on first launch ("cannot be opened because the developer cannot be verified"). Either right-click the app → **Open** → confirm, or run `xattr -cr /Applications/OfflineRadioBuilder.app` in Terminal once.
+
+**Linux note:** AppImages need the executable bit set before they'll run: `chmod +x OfflineRadioBuilder-x86_64.AppImage && ./OfflineRadioBuilder-x86_64.AppImage`. A plain (non-AppImage) binary is also available in the same release if you'd rather run it directly.
 
 ### Option 2 — Run from source
 
@@ -67,6 +66,8 @@ python main.py
 
 Requires Python 3.9+. `tkinterdnd2` is optional (enables drag-and-drop); everything also works via the Browse buttons without it.
 
+On Linux, `tkinter` itself isn't a pip package — install it via your distro's package manager if `python main.py` complains it's missing: `sudo apt install python3-tk` (Debian/Ubuntu), `sudo dnf install python3-tkinter` (Fedora), or `sudo pacman -S tk` (Arch).
+
 ### Building your own executable
 
 ```bash
@@ -75,9 +76,12 @@ build.bat
 
 # macOS
 ./build_mac.sh
+
+# Linux
+./build_linux.sh
 ```
 
-Both install `pyinstaller` and everything in `requirements.txt`, then build a windowed executable with the app's icon and version metadata embedded — `dist\OfflineRadioBuilder.exe` on Windows, `dist/OfflineRadioBuilder.app` on macOS. PyInstaller can't cross-compile, so each has to actually run on that OS; the same `.spec` file handles both.
+All three install `pyinstaller` and everything in `requirements.txt`, then build a windowed executable with the app's icon and version metadata embedded — `dist\OfflineRadioBuilder.exe` on Windows, `dist/OfflineRadioBuilder.app` on macOS, and both a plain binary and a `dist/OfflineRadioBuilder-x86_64.AppImage` on Linux. PyInstaller can't cross-compile, so each has to actually run on that OS; the same `.spec` file handles all three.
 
 ## How a mod gets built
 
@@ -101,11 +105,12 @@ track_ops.py / audio_metadata.py   Track copying + ID3/Vorbis tag reading
 theme.py                     Dark theme applied across the whole UI
 ui/                          Tkinter screens
 
-OfflineRadioBuilder.spec     PyInstaller build config (Windows .exe + macOS .app, same file)
-build.bat / build_mac.sh     One-command local builds for Windows / macOS
-icon.ico / icon.icns         App icons (Windows / macOS)
+OfflineRadioBuilder.spec     PyInstaller build config (Windows .exe + macOS .app + Linux binary/AppImage, same file)
+build.bat / build_mac.sh / build_linux.sh   One-command local builds per platform
+icon.ico / icon.icns / icon.png   App icons (Windows / macOS / Linux)
+offlineradiobuilder.desktop  Linux desktop entry (used when packaging the AppImage)
 version_info.txt             Embedded Windows file version metadata
-.github/workflows/build.yml  CI: builds both platforms on every version tag
+.github/workflows/build.yml  CI: builds all three platforms on every version tag
 ```
 
 ## Requirements

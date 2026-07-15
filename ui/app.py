@@ -106,22 +106,29 @@ class App(_TK_BASE):
 
     def _set_window_icon(self) -> None:
         """
-        Sets the running window's titlebar/taskbar icon on Windows. Without
-        this, Windows shows the default Tk feather icon while the app is
-        open even though the built .exe file itself has a custom icon --
-        those are two separate things in Tk. On macOS this is skipped: the
-        Dock/Finder icon comes from the .app bundle's Info.plist (set at
-        build time in the .spec file) instead, and iconbitmap() expects a
-        Windows .ico specifically.
+        Sets the running window's titlebar/taskbar icon on Windows and
+        Linux. Without this, the window manager shows a generic default
+        icon while the app is open even though the built executable itself
+        has a custom one -- those are separate things in Tk. Windows uses
+        iconbitmap() with the .ico; Linux window managers use iconphoto()
+        with a plain PNG instead (iconbitmap() expects XBM/ICO, which isn't
+        the right format there). macOS is skipped entirely: the Dock/Finder
+        icon comes from the .app bundle's Info.plist (set at build time in
+        the .spec file) instead.
         """
-        if sys.platform != "win32":
-            return
-        icon_path = _resource_path("icon.ico")
-        if icon_path.exists():
-            try:
-                self.iconbitmap(default=str(icon_path))
-            except Exception:
-                pass  # cosmetic only; never let a missing/bad icon block startup
+        try:
+            if sys.platform == "win32":
+                icon_path = _resource_path("icon.ico")
+                if icon_path.exists():
+                    self.iconbitmap(default=str(icon_path))
+            elif sys.platform.startswith("linux"):
+                icon_path = _resource_path("icon.png")
+                if icon_path.exists():
+                    photo = tk.PhotoImage(file=str(icon_path))
+                    self.iconphoto(True, photo)
+                    self._window_icon_photo = photo  # keep a reference alive
+        except Exception:
+            pass  # cosmetic only; never let a missing/bad icon block startup
 
     def set_status(self, message: str, kind: str = "info", timeout_ms: int | None = 6000) -> None:
         """

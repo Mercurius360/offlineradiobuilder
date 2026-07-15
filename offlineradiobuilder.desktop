@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Offline Radio Builder
+Comment=Build offline radio station mods for American Truck Simulator / Euro Truck Simulator 2
+Exec=OfflineRadioBuilder
+Icon=offlineradiobuilder
+Terminal=false
+Categories=Utility;

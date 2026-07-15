@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Linux build support: `.png` icon, `.desktop` file for menu integration, `build_linux.sh` produces both a plain binary and a self-contained `OfflineRadioBuilder-x86_64.AppImage`, and CI now builds it alongside Windows/macOS
+- Window icon (titlebar/taskbar) now also works on Linux via `iconphoto()`
 - macOS build support: `.icns` icon, PyInstaller now produces a proper `OfflineRadioBuilder.app` bundle on macOS (same `.spec` file handles both platforms), `build_mac.sh` for local builds, and CI now builds a distributable `.dmg` alongside the Windows `.exe`
 - Window icon (titlebar/taskbar) is now Windows-only, since macOS gets its icon from the `.app` bundle instead
 

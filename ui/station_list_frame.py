@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import messagebox, ttk
 
 import station_ops
 import theme
-from radio_sii import load_stations
+from radio_sii import load_stations, save_stations
 from tracks_sii import load_tracks
 
 
@@ -13,7 +15,9 @@ class StationListFrame(tk.Frame):
     (ttk.Treeview, multi-select): double-click a row to edit it, select one
     or more rows and click Delete (or press the Delete key) to remove them
     -- each removal deletes that station's folder, music, image assets, and
-    its block in offline_radio.[mod].sii.
+    its block in offline_radio.[mod].sii. Drag a row up/down (plain click,
+    no modifier) to reorder the list; releasing the mouse renumbers
+    offline_radio_station : _nameless.N to match and saves immediately.
     """
 
     def __init__(self, parent, controller):
@@ -49,7 +53,7 @@ class StationListFrame(tk.Frame):
 
         tk.Label(
             toolbar,
-            text="Double-click to edit  \u00b7  click to select, Ctrl/Shift-click for multiple",
+            text="Double-click to edit  \u00b7  click to select/drag to reorder  \u00b7  Ctrl/Shift-click for multiple",
             font=("Segoe UI", 9),
             fg=theme.FG_MUTED,
         ).pack(side="left", padx=(14, 0))
@@ -78,6 +82,10 @@ class StationListFrame(tk.Frame):
         self.tree.bind("<Double-1>", self._on_double_click)
         self.tree.bind("<<TreeviewSelect>>", self._on_selection_change)
         self.tree.bind("<Delete>", lambda e: self._delete_selected())
+        self.tree.bind("<ButtonPress-1>", self._on_row_press)
+        self.tree.bind("<B1-Motion>", self._on_row_motion)
+        self.tree.bind("<ButtonRelease-1>", self._on_row_release)
+        self._drag_item: str | None = None
 
         bottom_row = tk.Frame(outer)
         bottom_row.pack(anchor="w", pady=(16, 0), fill="x")
@@ -114,6 +122,65 @@ class StationListFrame(tk.Frame):
     def _on_selection_change(self, event=None) -> None:
         has_selection = bool(self.tree.selection())
         self.delete_btn.configure(state="normal" if has_selection else "disabled")
+
+    # ---- drag-to-reorder -------------------------------------------------
+
+    _CONTROL_MASK = 0x0004
+    _SHIFT_MASK = 0x0001
+
+    def _on_row_press(self, event) -> str | None:
+        if self.tree.identify_region(event.x, event.y) != "cell":
+            self._drag_item = None
+            return None  # header/border click etc -- let default behavior handle it
+
+        item = self.tree.identify_row(event.y)
+        if not item or (event.state & (self._CONTROL_MASK | self._SHIFT_MASK)):
+            self._drag_item = None
+            return None  # empty area, or a modifier-click -- let default multi-select run
+
+        # Plain click on a row: take over from the default binding so a
+        # drag can reorder instead of range-selecting, but still select
+        # the row like a normal click would.
+        self.tree.selection_set(item)
+        self._drag_item = item
+        return "break"
+
+    def _on_row_motion(self, event) -> None:
+        if self._drag_item is None:
+            return
+
+        target = self.tree.identify_row(event.y)
+        if not target:
+            children = self.tree.get_children()
+            if not children:
+                return
+            first_bbox = self.tree.bbox(children[0])
+            target_index = 0 if (first_bbox and event.y < first_bbox[1]) else len(children) - 1
+        else:
+            target_index = self.tree.index(target)
+
+        if target_index != self.tree.index(self._drag_item):
+            self.tree.move(self._drag_item, "", target_index)
+
+    def _on_row_release(self, event) -> None:
+        if self._drag_item is None:
+            return
+        dragged_item = self._drag_item
+        self._drag_item = None
+
+        new_order = [int(iid) for iid in self.tree.get_children()]
+        if new_order == list(range(len(new_order))):
+            return  # released without actually moving it
+
+        stations = self.controller.stations
+        reordered = [stations[i] for i in new_order]
+        self.controller.stations = reordered
+        save_stations(self.controller.project, reordered)
+
+        self._render_rows()
+        new_position = new_order.index(int(dragged_item))
+        self.tree.selection_set(str(new_position))
+        self.controller.set_status("Station order updated.", kind="success")
 
     # ---- actions ---------------------------------------------------------
 

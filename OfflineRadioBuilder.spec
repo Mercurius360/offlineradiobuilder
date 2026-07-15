@@ -1,20 +1,22 @@
 # -*- mode: python ; coding: utf-8 -*-
 #
 # Build with:  pyinstaller OfflineRadioBuilder.spec --noconfirm
-# (or just run build.bat on Windows / build_mac.sh on macOS)
+# (or just run build.bat on Windows / build_mac.sh on macOS / build_linux.sh on Linux)
 #
 # PyInstaller can't cross-compile -- this spec must be run ON the target
-# OS to produce a working build for it (Windows -> .exe, macOS -> .app).
-# It's written to handle both from the same file: on Windows it produces
-# a single-file windowed .exe with the app icon + version info embedded;
-# on macOS it additionally wraps that into a proper OfflineRadioBuilder.app
-# bundle with the .icns icon.
+# OS to produce a working build for it (Windows -> .exe, macOS -> .app,
+# Linux -> a plain onefile binary, packaged into an AppImage by
+# build_linux.sh / the CI workflow). It's written to handle all three from
+# the same file: on Windows it produces a single-file windowed .exe with
+# the app icon + version info embedded; on macOS it additionally wraps
+# that into a proper OfflineRadioBuilder.app bundle with the .icns icon;
+# on Linux it's a single-file windowed ELF binary.
 
 import sys
 
 from PyInstaller.utils.hooks import collect_data_files
 
-datas = [("icon.ico", ".")]
+datas = [("icon.ico", "."), ("icon.png", ".")]
 hiddenimports = [
     # mutagen picks its format handler dynamically at runtime, so these
     # need to be listed explicitly or PyInstaller's static analysis won't
