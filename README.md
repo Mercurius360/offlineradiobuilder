@@ -26,7 +26,7 @@ Offline Radio Builder walks you through everything needed to ship a working offl
 
 Everything is generated to match the real, in-game-tested `.sii`/`.dds`/`.mat`/`.tobj` formats — including several undocumented details (the `token` attribute's 12-character limit, the exact binary `.tobj` header layout, and the fact that a station's on-disk folder name must exactly equal its `id`) that aren't written down anywhere official and will silently break a mod if you get them wrong.
 
-## Screenshots
+## Screenshots & Tutorial Video
 
 | Welcome | Mod Setup |
 |---|---|
@@ -40,6 +40,10 @@ Everything is generated to match the real, in-game-tested `.sii`/`.dds`/`.mat`/`
 |---|
 | ![Create/Edit Station](docs/screenshots/04_create_edit_station.png) |
 | ![Track chart with the song editor panel](docs/screenshots/05_tracks_chart.png) |
+
+| Tutorial Video|
+|---|
+| [![Watch the video](https://youtube.com)](https://youtu.be/-Fn6TG2eERg) |
 
 ## Getting started
 
