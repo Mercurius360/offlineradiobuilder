@@ -21,7 +21,7 @@ Offline Radio Builder walks you through everything needed to ship a working offl
 - **Mod scaffolding** — generates `manifest.sii`, `mod_description.txt`, and a properly-sized `mod_icon.jpg` (auto-scaled to 276x162)
 - **Station management** — create, edit, and delete as many stations as you want, each with its own genre, language, stream-safe flag, history size, and crossfade duration
 - **UI images** — drop in a banner, mini player icon, and font/title image; the app converts them to the exact `.dds` format the game expects (correct pixel format, correct dimensions, correct `.mat`/`.tobj` pairing — including the SDF material format the font texture specifically needs) and lets you remove any of them later
-- **Track listing** — drag and drop `.mp3`/`.ogg` files in, reads ID3/Vorbis tags automatically, falls back to the filename when tags are missing, and lets you edit any track's title/artist by hand
+- **Track listing** — drag and drop `.mp3`/`.ogg` files in, reads ID3/Vorbis tags automatically, falls back to the filename when tags are missing, and lets you edit any track's title/artist by hand, and sort the playlist by song or artist
 - **One-click build** — nothing touches disk until you hit **Build Station**; everything is staged first, then written in one pass with a progress dialog
 
 Everything is generated to match the real, in-game-tested `.sii`/`.dds`/`.mat`/`.tobj` formats — including several undocumented details (the `token` attribute's 12-character limit, the exact binary `.tobj` header layout, and the fact that a station's on-disk folder name must exactly equal its `id`) that aren't written down anywhere official and will silently break a mod if you get them wrong.
@@ -62,8 +62,8 @@ Grab the latest build for your platform from [Releases](../../releases):
 ### Option 2 — Run from source
 
 ```bash
-git clone https://github.com/<your-username>/OfflineRadioBuilder.git
-cd OfflineRadioBuilder
+git clone https://github.com/Mercurius360/offlineradiobuilder.git
+cd offlineradiobuilder
 pip install -r requirements.txt
 python main.py
 ```

@@ -155,6 +155,32 @@ def apply_station_images(
     return updates
 
 
+def _field_mat_path(project, kind: str, value: str):
+    match = re.search(r"(/material/ui/radio/offline_station/[^\s\"<>]+\.mat)", value or "")
+    if not match:
+        return None
+    return project.target_mod_folder / match.group(1).lstrip("/")
+
+
+def reconcile_image_fields(project, fields: dict) -> list[str]:
+    """
+    Per-image self-healing: for each of the three images independently,
+    drop the sii field if the .mat it points at doesn't exist on disk, so
+    the game falls back to its default display for just that image.
+    Never touches the other images. Returns the field keys that were cleared.
+    """
+    cleared = []
+    for kind, (_suffix, field_key) in _IMAGE_KIND_INFO.items():
+        value = fields.get(field_key)
+        if not value:
+            continue
+        mat = _field_mat_path(project, kind, value)
+        if mat is None or not mat.exists():
+            fields.pop(field_key, None)
+            cleared.append(field_key)
+    return cleared
+
+
 def find_missing_assets(project, fields: dict) -> list[str]:
     """
     A station's cover_img/miniplayer_img/miniplayer_title_pml fields can

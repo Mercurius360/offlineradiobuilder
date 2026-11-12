@@ -1,0 +1,55 @@
+name: Build
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pyinstaller
+      - run: python -m PyInstaller OfflineRadioBuilder.spec --noconfirm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OfflineRadioBuilder-windows
+          path: dist/OfflineRadioBuilder.exe
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: brew install python-tk@3.12 || true
+      - run: pip install -r requirements.txt pyinstaller
+      - run: python -m PyInstaller OfflineRadioBuilder.spec --noconfirm
+      - name: Package dmg
+        run: |
+          hdiutil create -volname "Offline Radio Builder" -srcfolder dist/OfflineRadioBuilder.app -ov -format UDZO OfflineRadioBuilder.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OfflineRadioBuilder-macos
+          path: OfflineRadioBuilder.dmg
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y python3-tk libfuse2
+      - run: bash build_linux.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OfflineRadioBuilder-linux
+          path: |
+            dist/OfflineRadioBuilder
+            dist/OfflineRadioBuilder-x86_64.AppImage

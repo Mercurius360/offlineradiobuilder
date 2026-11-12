@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+build/
+dist/
+.build-venv/
+AppDir/
+appimagetool.AppImage
+*.AppImage

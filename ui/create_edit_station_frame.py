@@ -210,13 +210,6 @@ class CreateEditStationFrame(tk.Frame):
         )
         self.track_count_label.pack(side="left", padx=(10, 0))
 
-        drop_text = "Drag mp3/ogg files here, or click Add Tracks"
-        if not getattr(self.controller, "drag_drop_available", False):
-            drop_text = "Click Add Tracks to import mp3/ogg files"
-        self.drop_zone = tk.Label(section, text=drop_text, font=("Segoe UI", 10), height=2)
-        theme.style_panel_box(self.drop_zone)
-        self.drop_zone.pack(fill="x", pady=(0, 6))
-
         toolbar = tk.Frame(section)
         toolbar.pack(fill="x", pady=(0, 6))
         tk.Button(toolbar, text="Add Tracks...", command=self._browse_add_tracks).pack(side="left")
@@ -225,9 +218,15 @@ class CreateEditStationFrame(tk.Frame):
         )
         theme.style_danger_button(self.delete_tracks_btn)
         self.delete_tracks_btn.pack(side="left", padx=(8, 0))
-        tk.Label(
-            toolbar, text="Double-click a song to edit it", font=("Segoe UI", 9), fg=theme.FG_MUTED
-        ).pack(side="left", padx=(14, 0))
+        if getattr(self.controller, "drag_drop_available", False):
+            hint_text = "Drag mp3/ogg files onto the list. Click a header to sort; double-click a song to edit."
+        else:
+            hint_text = "Click Add Tracks to import. Click a header to sort; double-click a song to edit."
+        hint_label = tk.Label(
+            section, text=hint_text, font=("Segoe UI", 9), fg=theme.FG_MUTED, justify="left", anchor="w", wraplength=620
+        )
+        hint_label.pack(fill="x", pady=(0, 6))
+        hint_label.bind("<Configure>", lambda e, w=hint_label: w.configure(wraplength=max(200, e.width - 4)))
 
         tree_container = tk.Frame(section)
         tree_container.pack(fill="both", expand=True)
@@ -236,9 +235,9 @@ class CreateEditStationFrame(tk.Frame):
         self.track_tree = ttk.Treeview(
             tree_container, columns=columns, show="headings", selectmode="extended", height=10
         )
-        self.track_tree.heading("title", text="Song Title")
-        self.track_tree.heading("artist", text="Artist")
-        self.track_tree.heading("filename", text="File Name")
+        self._track_sort_state: tuple[str, bool] | None = None  # (column, descending)
+        for col, text in (("title", "Song Title"), ("artist", "Artist"), ("filename", "File Name")):
+            self.track_tree.heading(col, text=text, command=lambda c=col: self._sort_tracks(c))
         self.track_tree.column("title", width=220, anchor="w")
         self.track_tree.column("artist", width=150, anchor="w")
         self.track_tree.column("filename", width=180, anchor="w")
@@ -248,7 +247,7 @@ class CreateEditStationFrame(tk.Frame):
         self.track_tree.pack(side="left", fill="both", expand=True)
         track_scrollbar.pack(side="right", fill="y")
 
-        self._register_track_drop_target()  # both drop_zone and track_tree now exist
+        self._register_track_drop_target()
 
         self.track_tree.bind("<Double-1>", self._on_track_double_click)
         self.track_tree.bind("<<TreeviewSelect>>", self._on_track_selection_change)
@@ -319,6 +318,7 @@ class CreateEditStationFrame(tk.Frame):
         self._image_remove_flags: dict[str, bool] = {"banner": False, "miniplayer": False, "font": False}
         self._image_had_existing: dict[str, bool] = {"banner": False, "miniplayer": False, "font": False}
         self._staged_tracks: list[dict] = []
+        self._track_sort_state = None
         self._removed_existing_tracks: list[dict] = []
         self._editing_track_index: int | None = None
 
@@ -442,7 +442,7 @@ class CreateEditStationFrame(tk.Frame):
             return
         try:
             from tkinterdnd2 import DND_FILES
-            for widget in (self.drop_zone, self.track_tree):
+            for widget in (self.track_tree,):
                 widget.drop_target_register(DND_FILES)
                 widget.dnd_bind("<<Drop>>", self._on_track_drop)
         except Exception:
@@ -463,9 +463,23 @@ class CreateEditStationFrame(tk.Frame):
     def _stage_tracks(self, paths: list[Path]) -> None:
         self._sync_track_edits()  # preserve any in-progress side-panel edit state before rebuilding rows
 
-        total = len(paths)
+        # Skip files that are already in this station's track list (matched
+        # by filename, since that's how a track is identified on disk/in
+        # tracks.sii) rather than adding a second copy -- but keep going for
+        # the rest of the batch instead of stopping at the first duplicate.
+        existing_filenames = {t["filename"] for t in self._staged_tracks}
+        duplicates: list[str] = []
+        new_paths: list[Path] = []
+        for path in paths:
+            if path.name in existing_filenames:
+                duplicates.append(path.name)
+            else:
+                new_paths.append(path)
+                existing_filenames.add(path.name)  # also de-dupe within this same batch
+
+        total = len(new_paths)
         errors = []
-        for i, path in enumerate(paths, start=1):
+        for i, path in enumerate(new_paths, start=1):
             self._set_local_status(f"Reading {path.name}... ({i}/{total})")
             try:
                 artist, title = audio_metadata.read_artist_title(path)
@@ -482,15 +496,63 @@ class CreateEditStationFrame(tk.Frame):
                 errors.append(f"{path.name}: {exc}")
             self.update_idletasks()
 
-        self._render_track_chart()
+        if total:
+            self._sort_tracks("title", descending=False)  # imported music lands sorted by Song, then Artist
+        else:
+            self._render_track_chart()
+
+        if duplicates:
+            dup_list = "\n".join(f"  \u2022 {name}" for name in duplicates)
+            added_note = f"{total} new track(s) were added." if total else "No new tracks were added -- everything you dropped was already in the list."
+            messagebox.showinfo(
+                "Already in this station's track list",
+                f"{len(duplicates)} file(s) were skipped because they're already in the list:\n\n"
+                f"{dup_list}\n\n{added_note}",
+            )
+
         if errors:
             messagebox.showerror("Some files couldn't be added", "\n".join(errors))
             self._set_local_status(f"Added {total - len(errors)} of {total} file(s).", kind="warning")
-        else:
+        elif total:
             self._set_local_status(f"Added {total} file(s).", kind="success")
-        self.controller.set_status(f"{total} track(s) staged (copied when you Build Station).")
+        elif duplicates:
+            self._set_local_status("No new tracks added (all were already in the list).", kind="warning")
+
+        if total:
+            self.controller.set_status(f"{total} track(s) staged (copied when you Build Station).")
+
+    _TRACK_COLUMN_LABELS = {"title": "Song Title", "artist": "Artist", "filename": "File Name"}
+
+    @staticmethod
+    def _track_sort_key(column: str):
+        key_for = {
+            "title": lambda t: (t.get("name", "").lower(), t.get("artist", "").lower()),
+            "artist": lambda t: (t.get("artist", "").lower(), t.get("name", "").lower()),
+            "filename": lambda t: (t.get("filename", "").lower(),),
+        }
+        return key_for[column]
+
+    def _sort_tracks(self, column: str, descending: bool | None = None) -> None:
+        """Sort the playlist (which is also the tracks.sii order) by a column.
+        Clicking the same header again reverses it."""
+        self._sync_track_edits()
+        if descending is None:
+            state = self._track_sort_state
+            descending = bool(state and state[0] == column and not state[1])
+        self._staged_tracks.sort(key=self._track_sort_key(column), reverse=descending)
+        self._track_sort_state = (column, descending)
+        self._render_track_chart()
+
+    def _update_sort_headers(self) -> None:
+        state = getattr(self, "_track_sort_state", None)
+        for col, text in self._TRACK_COLUMN_LABELS.items():
+            arrow = ""
+            if state and state[0] == col:
+                arrow = "  \u25bc" if state[1] else "  \u25b2"
+            self.track_tree.heading(col, text=text + arrow)
 
     def _render_track_chart(self) -> None:
+        self._update_sort_headers()
         self.track_tree.delete(*self.track_tree.get_children())
         for i, track in enumerate(self._staged_tracks):
             self.track_tree.insert(
@@ -664,20 +726,27 @@ class CreateEditStationFrame(tk.Frame):
             self.controller.editing_station_index = index
             station_id = stations[index]["id"]
 
+            # Each image is handled on its own: only the kinds the user
+            # actually removed or replaced are touched.
             for kind in ("banner", "miniplayer", "font"):
-                if self._image_remove_flags[kind]:
+                if self._image_remove_flags[kind] and self._image_sources[kind] is None:
                     field_key = material_assets.remove_image_asset(project, station_id, kind)
                     stations[index].pop(field_key, None)
 
-            if any(self._image_sources.values()):
+            for kind in ("banner", "miniplayer", "font"):
+                source = self._image_sources[kind]
+                if source is None:
+                    continue
                 updates = material_assets.apply_station_images(
                     project,
                     station_id,
-                    banner_source=self._image_sources["banner"],
-                    miniplayer_source=self._image_sources["miniplayer"],
-                    font_source=self._image_sources["font"],
+                    banner_source=source if kind == "banner" else None,
+                    miniplayer_source=source if kind == "miniplayer" else None,
+                    font_source=source if kind == "font" else None,
                 )
                 stations[index].update(updates)
+
+            material_assets.reconcile_image_fields(project, stations[index])
 
             radio_sii.save_stations(project, stations)
 

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Replacing or removing one station image (Banner, Mini Player Icon, Font/Title) now only touches that image's own `.dds`/`.mat`/`.tobj` and sii field; the other two are never rewritten. Any field pointing at a missing file is cleared so the game falls back to its default display for just that image
+- Removed the separate music drop box: drag `.mp3`/`.ogg` files straight onto the playlist (Add Tracks... still works)
+- Playlist sorting: click the Song Title, Artist or File Name header to sort (click again to reverse); newly imported music is sorted by Song, then Artist
 - Linux build support: `.png` icon, `.desktop` file for menu integration, `build_linux.sh` produces both a plain binary and a self-contained `OfflineRadioBuilder-x86_64.AppImage`, and CI now builds it alongside Windows/macOS
 - Window icon (titlebar/taskbar) now also works on Linux via `iconphoto()`
 - macOS build support: `.icns` icon, PyInstaller now produces a proper `OfflineRadioBuilder.app` bundle on macOS (same `.spec` file handles both platforms), `build_mac.sh` for local builds, and CI now builds a distributable `.dmg` alongside the Windows `.exe`
