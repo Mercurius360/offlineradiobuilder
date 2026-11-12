@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0
 
 - Replacing or removing one station image (Banner, Mini Player Icon, Font/Title) now only touches that image's own `.dds`/`.mat`/`.tobj` and sii field; the other two are never rewritten. Any field pointing at a missing file is cleared so the game falls back to its default display for just that image
 - Removed the separate music drop box: drag `.mp3`/`.ogg` files straight onto the playlist (Add Tracks... still works)

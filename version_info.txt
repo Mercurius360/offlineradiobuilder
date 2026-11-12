@@ -6,8 +6,8 @@
 
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 0, 0, 0),
-    prodvers=(1, 0, 0, 0),
+    filevers=(1, 1, 0, 0),
+    prodvers=(1, 1, 0, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -23,12 +23,12 @@ VSVersionInfo(
           [
             StringStruct(u'CompanyName', u'Mercurius'),
             StringStruct(u'FileDescription', u'Offline Radio Builder - ATS/ETS2 Mod Tool'),
-            StringStruct(u'FileVersion', u'1.0.0.0'),
+            StringStruct(u'FileVersion', u'1.1.0.0'),
             StringStruct(u'InternalName', u'OfflineRadioBuilder'),
             StringStruct(u'LegalCopyright', u'\u00A9 Mercurius'),
             StringStruct(u'OriginalFilename', u'OfflineRadioBuilder.exe'),
             StringStruct(u'ProductName', u'Offline Radio Builder'),
-            StringStruct(u'ProductVersion', u'1.0.0.0'),
+            StringStruct(u'ProductVersion', u'1.1.0.0'),
           ],
         )
       ]
